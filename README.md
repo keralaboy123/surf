@@ -1,2 +1,3 @@
 # surf
-it is a burpsuit alternative tool
+it is a opensource equalant of burpsuit.
+
