@@ -1,3 +1,3 @@
 # surf
-it is a opensource equalant of burpsuit.
+a software for proxy
 
