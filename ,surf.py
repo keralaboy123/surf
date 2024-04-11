@@ -1,59 +1,61 @@
-from mitmproxy.options import Options
-from mitmproxy.proxy.config import ProxyConfig
-from mitmproxy.proxy.server import ProxyServer
-from mitmproxy.tools.dump import DumpMaster
-
-import threading
+from mitmproxy.tools.main import run
+from mitmproxy import master as dump
 import asyncio
-import time
-import addon
+import signal
+from mitmproxy import options
+from mitmproxy.addons import dumper, errorcheck, keepserving, readfile, termlog
+from mitmproxy import addons
 
-#thread example borrowed from https://gist.github.com/BigSully/3da478792ee331cb2e5ece748393f8c4
-
-def  threadloop(loop, master):
-    asyncio.set_event_loop(loop)
-    #master.run_loop(loop.run_forever)
-
-
-class prox:
-    def __init__(self,host='0.0.0.0',port=8080,addon=object()):
-       self.options = Options(listen_host=host, listen_port=port, http2=True)
-       self.dumpmaster = DumpMaster(self.options, with_termlog=False, with_dumper=False)
-       self.config = ProxyConfig(self.options)
-       self.dumpmaster.server = ProxyServer(self.config)
-       self.dumpmaster.addons.add(addon)
-       self.dumpmaster
-       self.loop = self.dumpmaster.channel.loop
-       self.thread = threading.Thread(target=threadloop, args=(self.loop, self.dumpmaster))
-
-
-    def starter(self):
-        print("starting mitmproxy")
-        self.thread.start()
-
-
-    def stoper(self):
-        print("stoping mitmproxy")
-        #self.loop.stop()
-        self.dumpmaster.shutdown()
-
-
-
-class AddonDemo(object):
+"this code is important we can extend this so we can create a gui for this python api."
+class CustomServerAddon:
+    def __init__(self,master):
+        self.master = master
     def request(self, flow):
-        print("@request received = "+flow.request.url)
+
+        # Handle incoming requests
+        print("halo reqest got ", flow.request.url)
+        self.master.stop()
 
     def response(self, flow):
-        print("@responce received")
+        # Handle outgoing responses
+        print("helo responce got :", flow.request.url)
 
-def run():
-    proxy=prox(addon=AddonDemo())
-    proxy.starter()
-    time.sleep(20)
-    proxy.stoper()
+class surf:
+    ip= "127.0.0.1"
+    port = 8080
+    async def __run(self,opts=None):
+        self.opts = opts or options.Options(listen_host= self.ip ,listen_port = self.port)
+        self.loop = asyncio.get_event_loop()
+        self.master = dump.Master(self.opts,event_loop=self.loop)
+        self.master.addons.add(CustomServerAddon(self))
+        self.master.addons.add(termlog.TermLog())
+        self.master.addons.add(*addons.default_addons())
+        self.master.addons.add(
+            keepserving.KeepServing(),
+            readfile.ReadFileStdin(),
+            errorcheck.ErrorCheck(),
+        )
+        signal.signal(signal.SIGINT, self.stop_from_terminal)
+        signal.signal(signal.SIGTERM, self.stop)
+        await self.master.run()
+        return  self.master
+    def run(self):
+        asyncio.run(self.__run())
+    def stop_from_terminal(self, *_):
+
+        self.loop.call_soon_threadsafe(
+            getattr(self.master, "prompt_for_exit", self.master.shutdown)
+        )
+
+    def stop(self,*_):
+        self.loop.call_soon_threadsafe(self.master.shutdown)
 
 
 if __name__ == "__main__":
-    run()
-    time.sleep(1)
-    run()
+   surf_class = surf()
+   print("running")
+   surf_class.run()
+   print("stoped .. ")
+
+
+
