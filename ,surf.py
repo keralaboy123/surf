@@ -7,17 +7,15 @@ from mitmproxy.addons import dumper, errorcheck, keepserving, readfile, termlog
 from mitmproxy import addons
 
 "this code is important we can extend this so we can create a gui for this python api."
+
 class CustomServerAddon:
     def __init__(self,master):
         self.master = master
+        
     def request(self, flow):
-
-        # Handle incoming requests
         print("halo reqest got ", flow.request.url)
-        self.master.stop()
-
+ 
     def response(self, flow):
-        # Handle outgoing responses
         print("helo responce got :", flow.request.url)
 
 class surf:
