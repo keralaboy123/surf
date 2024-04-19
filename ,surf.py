@@ -21,6 +21,7 @@ class CustomServerAddon:
 class surf:
     ip= "127.0.0.1"
     port = 8080
+    
     async def __run(self,opts=None):
         self.opts = opts or options.Options(listen_host= self.ip ,listen_port = self.port)
         self.loop = asyncio.get_event_loop()
@@ -37,13 +38,12 @@ class surf:
         signal.signal(signal.SIGTERM, self.stop)
         await self.master.run()
         return  self.master
+        
     def run(self):
         asyncio.run(self.__run())
+        
     def stop_from_terminal(self, *_):
-
-        self.loop.call_soon_threadsafe(
-            getattr(self.master, "prompt_for_exit", self.master.shutdown)
-        )
+        self.loop.call_soon_threadsafe(getattr(self.master, "prompt_for_exit", self.master.shutdown))
 
     def stop(self,*_):
         self.loop.call_soon_threadsafe(self.master.shutdown)
