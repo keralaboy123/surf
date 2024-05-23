@@ -13,10 +13,10 @@ class CustomServerAddon:
         self.master = master
         
     def request(self, flow):
-        print("halo reqest got ", flow.request.url)
+        print("got a reqest ", flow.request.url)
  
     def response(self, flow):
-        print("helo responce got :", flow.request.url)
+        print("got a responce :", flow.request.url)
 
 class surf:
     ip= "127.0.0.1"
